@@ -5,8 +5,7 @@
     <classes>
       <class name="Scrapingdata.RecipeScraping">
         <methods>
-          <include name="enterRecipe"/>
-          <include name="launchBrowser"/>
+          <include name="pagination"/>
         </methods>
       </class> <!-- Scrapingdata.RecipeScraping -->
     </classes>

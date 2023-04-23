@@ -2,10 +2,13 @@ package Scrapingdata;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import utility.ExcelReader;
+
+import org.bouncycastle.asn1.ASN1Exception;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
@@ -27,7 +30,7 @@ public class RecipeScraping {
 		co.addArguments("--remote-allow-origins=*");
 		driver = new ChromeDriver(co);
 		props = new Properties();
-		String filePath = "/Users/uvaraj/eclipse-workspace/WebScraping/src/test/resources/config.properties";
+		String filePath = "/Users/uvaraj/git/WebsSraping/WebScraping/src/test/resources/config.properties";
 		FileInputStream inputstream = new FileInputStream(filePath);
 		props.load(inputstream);
 
@@ -74,9 +77,13 @@ public class RecipeScraping {
 			System.out.println("total recipes in page:" + pagesize);
 
 			Thread.sleep(2000);
-
+try {
 			driver.findElement(By.xpath("//div[@id='maincontent']/div/div[@id='cardholder']/div[3]//a[" + i + "]"))
 					.click();
+}catch(Exception e){
+	System.out.println("Exception occcured ::"+e);
+}
+
 
 			for (int p = 1; p <= pagesize; p++) {
 				try {
@@ -130,35 +137,44 @@ public class RecipeScraping {
 					 **/
 
 					// reciepename.click();
+					
+				    String url =	driver.getCurrentUrl();
+				    System.out.println("Recipe Url :"+url);
 
-					WebElement ingredients = driver.findElement(By.xpath("//div[@id='rcpinglist']"));
-					System.out.println("ingredients name " + ingredients.getText());
-					String ingredientsName = ingredients.getText();
+					List<WebElement> ingredients = driver.findElements(By.xpath("//div[@id='rcpinglist']"));
+					System.out.println("ingredients name " + ingredients.get(0).getText());
+					String ingredientsName = ingredients.get(0).getText();
 
 					WebElement method = driver.findElement(By.xpath("//div[@id='recipe_small_steps']"));
 					System.out.println("ingredientmethod " + method.getText());
 					String methodName = method.getText();
-
+					String nutrientValue = null;
+					String preparationTimeSt = null;
+					String cookTime = null;
+					try {
 					WebElement NutrientValue = driver.findElement(By.xpath("//div[@id='accompaniments']"));
-					if (NutrientValue != null) {
+
 						System.out.println("NutrientValue " + NutrientValue.getText());
-					}
-					String nutrientValue = NutrientValue.getText();
+					
+					 nutrientValue = NutrientValue.getText();
 
 					WebElement preparationTime = driver.findElement(By.xpath("//time[@itemprop='prepTime']"));
-					if (preparationTime != null) {
 						System.out.println("preparationTime " + preparationTime.getText());
-					}
-					String preparationTimeSt = preparationTime.getText();
+					 preparationTimeSt = preparationTime.getText();
+					
 
 					WebElement cookingTime = driver.findElement(By.xpath("//time[@itemprop='cookTime']"));
 					System.out.println("cookingTime " + cookingTime.getText());
-					String cookTime = cookingTime.getText();
+					cookTime = cookingTime.getText();
+					}catch(Exception e) {
+						System.out.println("Exception occcured ::"+e);
+					}
+			
 
 					driver.navigate().back();
-
+				
 					Object[] recipeData = { receipeId, reciepename, ingredientsName, methodName, nutrientValue,
-							preparationTimeSt, cookTime };
+							preparationTimeSt, cookTime,url };
 					scrapedData.add(recipeData);
 					Reader.writeToExcel(scrapedData);
 					

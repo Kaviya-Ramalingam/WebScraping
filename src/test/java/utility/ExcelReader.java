@@ -17,7 +17,7 @@ public class ExcelReader {
 	        XSSFSheet sheet = workbook.createSheet("Recipes");
 	        
 	        // Create header row
-	        String[] headers = {"RecipeID" ,"Recipe Name","ingredients","method","NutrientValue","preparationTime","cookingTime"};
+	        String[] headers = {"RecipeID" ,"Recipe Name","ingredients","method","NutrientValue","preparationTime","cookingTime","url"};
 	        XSSFRow headerRow = sheet.createRow(0);
 	        for (int i = 0; i < headers.length; i++) {
 	            XSSFCell cell = headerRow.createCell(i);
@@ -53,6 +53,27 @@ public class ExcelReader {
 	        workbook.close();
 	        System.out.println("Data saved to " + filename);
 	    }
+	 
+	/** public static void readfromExcel(String sheetname) throws IOException
+		{
+		
+		String Excelpath=
+		//ExcelReader reader = new ExcelReader( );
+		
+		
+		// ****************************  READ DATA **************************************
+		String diabetes=reader.getCellData("Sheet1", 0, 0);
+		int rowSize=reader.getRowCount("Sheet1");
+		System.out.println(" row size "+ rowSize);
+		System.out.println("Reading excel ");
+		
+		for(int i=1;i<=rowSize;i++)
+		{
+		String data=reader.getCellData("Sheet1", i, 0);
+		System.out.println(data);
+//		eliminatedArray.add(data);   
+		}
+		}**/
 	
 
 }
