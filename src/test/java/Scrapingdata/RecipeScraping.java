@@ -39,7 +39,7 @@ public class RecipeScraping {
 	@Test(priority = 1)
 	public void enterRecipe() {
 
-		WebElement RecipeSearch = driver.findElement(By.id("ctl00_txtsearch"));
+		WebElement RecipeSearch = driver.findElement(By.name("ctl00$txtsearch"));
 		RecipeSearch.sendKeys(props.getProperty("Recipe"));
 		RecipeSearch.sendKeys(Keys.ENTER);
 	}
