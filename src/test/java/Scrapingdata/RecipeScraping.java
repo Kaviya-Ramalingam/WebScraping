@@ -6,7 +6,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import utility.ExcelReader;
+import utility.ExcelWriter;
+import utility.LoggerLoad;
+import utility.SegregateData;
 
 import org.bouncycastle.asn1.ASN1Exception;
 import org.openqa.selenium.By;
@@ -19,9 +21,11 @@ import org.testng.annotations.Test;
 
 public class RecipeScraping {
 
-	ExcelReader Reader = new ExcelReader();
+	ExcelWriter Writer = new ExcelWriter();
 	public static WebDriver driver;
 	public static Properties props;
+	
+	SegregateData Data= new SegregateData();
 
 	@Test(priority = 0)
 	public void launchBrowser() throws InterruptedException, IOException {
@@ -33,9 +37,7 @@ public class RecipeScraping {
 		String filePath = "/Users/uvaraj/git/WebsSraping/WebScraping/src/test/resources/config.properties";
 		FileInputStream inputstream = new FileInputStream(filePath);
 		props.load(inputstream);
-
 		driver.get((String) props.get("URL"));
-
 		driver.manage().window().maximize();
 	}
 
@@ -69,7 +71,7 @@ public class RecipeScraping {
 
 		List<Object[]> scrapedData = new ArrayList<>();
 
-		for (int i = 1; i <= totalpage; i++) {
+		for (int i = 1; i <= paginationsize; i++) {
 			System.out.println("currentPge" + i);
 
 			List<WebElement> recipelist = driver.findElements(By.xpath("//div[@class='rcc_recipecard']"));
@@ -77,25 +79,19 @@ public class RecipeScraping {
 			System.out.println("total recipes in page:" + pagesize);
 
 			Thread.sleep(2000);
-try {
-			driver.findElement(By.xpath("//div[@id='maincontent']/div/div[@id='cardholder']/div[3]//a[" + i + "]"))
-					.click();
-}catch(Exception e){
-	System.out.println("Exception occcured ::"+e);
-}
 
+		       WebElement page =driver.findElement(By.xpath("//div[@id='maincontent']/div/div[@id='cardholder']/div[3]//a[" + i + "]"));
+			     page.click();
 
 			for (int p = 1; p <= pagesize; p++) {
 				try {
 
-					// JavascriptExecutor javascriptExecutor =(JavascriptExecutor)driver;
-					// javascriptExecutor.executeScript("scroll(0,200);");
 
-					List<WebElement> RecipeID = driver
+					List<WebElement> recipeID = driver
 							.findElements(By.xpath("//div[@class='rcc_recipecard'][" + p + "]/div[2]/span[1]"));
 					String receipeId = null;
 
-					if (RecipeID.isEmpty() || RecipeID.size() == 0 || RecipeID == null) {
+					if (recipeID.isEmpty() || recipeID.size() == 0 || recipeID == null) {
 
 						List<WebElement> altRecipeID = driver.findElements(
 								By.xpath("//div[@id='maincontent']/div/div[2]/div[" + p + "]/div[2]/span"));
@@ -104,84 +100,121 @@ try {
 							System.out.println("Recipe id:" + altRecipeID.get(0).getText());
 						}
 					} else {
-						receipeId = RecipeID.get(0).getText();
-						System.out.println("receipeID" + RecipeID.get(0).getText());
+						receipeId = recipeID.get(0).getText();
+						System.out.println("receipeID" + recipeID.get(0).getText());
 
 					}
-
-					List<WebElement> Recipename = driver
+					List<WebElement> recipetitle = driver
 							.findElements(By.xpath("//div[@class='rcc_recipecard'][" + p + "]/div[3]/span[1]/a"));
 					String reciepename = null;
 
-					if (Recipename.isEmpty() || Recipename.size() == 0 || Recipename == null) {
+					if (recipetitle.isEmpty() || recipetitle.size() == 0 || recipetitle == null) {
 
-						List<WebElement> altRecipename = driver.findElements(
+						List<WebElement> altRecipetitle = driver.findElements(
 								By.xpath("//div[@id='maincontent']/div/div[2]/div[" + p + "]/div[3]/span[1]/a"));
-						if (!altRecipename.isEmpty()) {
-							reciepename = altRecipename.get(0).getText();
-							System.out.println("Recipe Name:" + altRecipename.get(0).getText());
-							altRecipename.get(0).click();
+						if (!altRecipetitle.isEmpty()) {
+							reciepename = altRecipetitle.get(0).getText();
+							System.out.println("Recipe Title:" + altRecipetitle.get(0).getText());
+							altRecipetitle.get(0).click();
 						}
 					} else {
-						reciepename = Recipename.get(0).getText();
-						System.out.println("receipe Name" + Recipename.get(0).getText());
-						Recipename.get(0).click();
+					reciepename = recipetitle.get(0).getText();
+						System.out.println("receipe Title" + recipetitle.get(0).getText());
+						recipetitle.get(0).click();
 
 					}
-
-					/**
-					 * WebElement Recipename = driver.findElement(By.xpath(
-					 * "//div[@class='rcc_recipecard']["+p+"]/div[3]/span[1]/a"));
-					 * System.out.println("Receipe name "+Recipename.getText()); String receipeName
-					 * = Recipename.getText();
-					 **/
-
-					// reciepename.click();
 					
-				    String url =	driver.getCurrentUrl();
-				    System.out.println("Recipe Url :"+url);
+
+					String url = driver.getCurrentUrl();
+					System.out.println("Recipe Url :" + url);
+					
+					String ingredientsName = null;
+					String methodName = null;
+					String categoryOfFood = null;
+					String categoryOfRecipe=null;
+					
+					List<WebElement> foodCategory = driver.findElements(By.xpath("//div[@id='show_breadcrumb']/div/span[5]/a/span"));
+					if(!foodCategory.isEmpty()) {
+						categoryOfFood = foodCategory.get(0).getText();
+					System.out.println("food category:"+foodCategory.get(0).getText());
+					}
+					
+					
 
 					List<WebElement> ingredients = driver.findElements(By.xpath("//div[@id='rcpinglist']"));
-					System.out.println("ingredients name " + ingredients.get(0).getText());
-					String ingredientsName = ingredients.get(0).getText();
+					if (!ingredients.isEmpty()) {
 
-					WebElement method = driver.findElement(By.xpath("//div[@id='recipe_small_steps']"));
-					System.out.println("ingredientmethod " + method.getText());
-					String methodName = method.getText();
+						System.out.println("ingredients name " + ingredients.get(0).getText());
+						ingredientsName = ingredients.get(0).getText();
+					}
+
+					List<WebElement> method = driver.findElements(By.xpath("//div[@id='recipe_small_steps']"));
+					if (!method.isEmpty()) {
+						System.out.println("ingredientmethod " + method.get(0).getText());
+						methodName = method.get(0).getText();
+					}
+					
 					String nutrientValue = null;
 					String preparationTimeSt = null;
 					String cookTime = null;
 					try {
-					WebElement NutrientValue = driver.findElement(By.xpath("//div[@id='accompaniments']"));
+						List<WebElement> nutrientValues = driver.findElements(By.xpath("//div[@id='recipe_nutrients']"));
+						if (!nutrientValues.isEmpty()) {
+							System.out.println("NutrientValue " + nutrientValues.get(0).getText());
 
-						System.out.println("NutrientValue " + NutrientValue.getText());
-					
-					 nutrientValue = NutrientValue.getText();
+							nutrientValue = nutrientValues.get(0).getText();
+						}
 
-					WebElement preparationTime = driver.findElement(By.xpath("//time[@itemprop='prepTime']"));
-						System.out.println("preparationTime " + preparationTime.getText());
-					 preparationTimeSt = preparationTime.getText();
-					
+						List<WebElement> preparationTime = driver
+								.findElements(By.xpath("//time[@itemprop='prepTime']"));
+						if (!preparationTime.isEmpty()) {
+							System.out.println("preparationTime " + preparationTime.get(0).getText());
+							preparationTimeSt = preparationTime.get(0).getText();
+						}
 
-					WebElement cookingTime = driver.findElement(By.xpath("//time[@itemprop='cookTime']"));
-					System.out.println("cookingTime " + cookingTime.getText());
-					cookTime = cookingTime.getText();
-					}catch(Exception e) {
-						System.out.println("Exception occcured ::"+e);
+						List<WebElement> cookingTime = driver.findElements(By.xpath("//time[@itemprop='cookTime']"));
+						if (!cookingTime.isEmpty()) {
+							System.out.println("cookingTime " + cookingTime.get(0).getText());
+							cookTime = cookingTime.get(0).getText();
+							
+						}
+                     	
+
+					} catch (Exception e) {
+						try {
+							System.out.print("Alert Check");
+							driver.switchTo().alert().dismiss();
+						} catch (Exception e1) {
+
+							System.out.print("No Alerts");
+							System.out.print(reciepename + " had exceptions");
+						}
+						
+					}finally {
+						driver.navigate().back();	
 					}
+					
+					Object[] recipeData = { receipeId, reciepename, ingredientsName, methodName, nutrientValue,
+							preparationTimeSt, cookTime, url ,categoryOfFood};
+					scrapedData.add(recipeData);
+					Writer.writeToExcel(scrapedData);
+					
 			
 
-					driver.navigate().back();
-				
-					Object[] recipeData = { receipeId, reciepename, ingredientsName, methodName, nutrientValue,
-							preparationTimeSt, cookTime,url };
-					scrapedData.add(recipeData);
-					Reader.writeToExcel(scrapedData);
-					
 				} catch (Exception e) {
+					e.printStackTrace();
 					System.out.println("Exception occurred ::" + e);
 				}
 			}
 		}
 	}
+	@Test(priority =4)
+	
+	public void eliminatingRecipes() throws Exception {
+		
+		Data.segregateData();
+		LoggerLoad.info("elimination completed");
+	}
+
+	
 }
